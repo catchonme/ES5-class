@@ -180,24 +180,16 @@ var wrap = function(self, key, method){
 
 var implement = function(key, value, retain){
 
-    // 使用 Extends 继承时
     if (Class.Mutators.hasOwnProperty(key)){
-        // console.log(key) // Extends
-        // console.log(value) // newClass 函数
         value = Class.Mutators[key].call(this, value);
         if (value == null) {
             return this;
         }
     }
 
-    // console.log('implement params ' + key)
-    // console.log('implement params value ' + value)
-    // this.prototype[key] = (retain) ? value : wrap(this, key, value);
-    // console.log('retain is ' + retain || 'retain is undefined') // undefined
-
     /*
-     Extends 继承的时候，retain 是 false ,所以 wrap 函数
-     Implements 的时候，该函数为新函数的prototype
+     Extends 继承的时候，retain 为 false, 所以 wrap 函数
+     Implements 的时候，retain 为 true，该函数为新函数的prototype
      */
     this.prototype[key] = (retain) ? value : wrap(this, key, value);
 
@@ -211,7 +203,6 @@ var getInstance = function(klass){
     return proto;
 };
 
-// 这里有 overloadSetter ，所以，可能是 Class.implement 方法，来给类额外添加函数的
 Class.implement('implement', implement.overloadSetter());
 
 Class.Mutators = {
@@ -227,6 +218,7 @@ Class.Mutators = {
         var afterItems = [items];
         afterItems.forEach(function(item){
             var instance = new item;
+            // 使用 implement 函数来将 items 中的函数赋给新类的 prototype 中
             for (var key in instance) implement.call(this, key, instance[key], true);
         }, this);
     }
