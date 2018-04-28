@@ -3,6 +3,22 @@
  */
 
 /* 依赖函数 */
+
+var class2Type = function (object) {
+    var _toString = Object.prototype.toString;
+    var classType = _toString.call(object);
+    var type = '';
+    switch (classType) {
+        case '[object String]': type = 'string';break;
+        case '[object Number]': type = 'number';break;
+        case '[object Object]': type = 'object';break;
+        case '[object Array]': type = 'array';break;
+        case '[object Null]': type = 'null';break;
+        case '[object Undefined]': type = 'undefined';break;
+    }
+    return type;
+}
+
 Function.prototype.overloadSetter = function(usePlural){
     var self = this;
     return function(a, b){
@@ -39,7 +55,7 @@ Function.implement({
 });
 
 var cloneOf = function(item){
-    switch (typeof(item)){
+    switch (class2Type(item)){
         case 'array': return item.clone();
         case 'object': return Object.clone(item);
         default: return item;
@@ -53,9 +69,9 @@ Array.implement('clone', function(){
 });
 
 var mergeOne = function(source, key, current){
-    switch (typeof(current)){
+    switch (class2Type(current)){
         case 'object':
-            if (typeof(source[key]) == 'object') Object.merge(source[key], current);
+            if (class2Type(source[key]) == 'object') Object.merge(source[key], current);
             else source[key] = Object.clone(current);
             break;
         case 'array': source[key] = current.clone(); break;
@@ -72,7 +88,7 @@ var extend = function(name, method){
 Object.extend = extend.overloadSetter();
 Object.extend({
     merge: function (source, k, v) {
-        if (typeof(k) == 'string') return mergeOne(source, k, v);
+        if (class2Type(k) == 'string') return mergeOne(source, k, v);
         for (var i = 1, l = arguments.length; i < l; i++) {
             var object = arguments[i];
             for (var key in object) mergeOne(source, key, object[key]);
@@ -99,7 +115,6 @@ var Class = function(params){
         // 有初始化函数的话，就传入参数到该初始化函数并执行，没有就返回自身
         var value = (this.initialize) ? this.initialize.apply(this, arguments) : this;
 
-        console.log(this.$caller);
         this.$caller = null;
         return value;
         // 新生成的函数 newClass 与 this 绑定，
@@ -139,7 +154,7 @@ var parent = function(){
 var reset = function(object){
     for (var key in object){
         var value = object[key];
-        switch (typeof(value)){
+        switch (class2Type(value)){
             case 'object':
                 var F = function(){};
                 F.prototype = value;
@@ -160,10 +175,6 @@ var wrap = function(self, key, method){
         if (method.$protected && this.$caller == null) throw new Error('The method "' + key + '" cannot be called.');
 
         var current = this.$caller;
-
-        if (this.$caller) {
-            // console.log('this.$caller.$name is ' + this.$caller.$name || 'no name');
-        }
 
         this.$caller = wrapper; // method 的 $caller
         // 将 method 绑定到当前对象中
@@ -191,7 +202,12 @@ var implement = function(key, value, retain){
      Extends 继承的时候，retain 为 false, 所以 wrap 函数
      Implements 的时候，retain 为 true，该函数为新函数的prototype
      */
-    this.prototype[key] = (retain) ? value : wrap(this, key, value);
+    if (typeof value == 'function') {
+        this.prototype[key] = (retain) ? value : wrap(this, key, value);
+    } else {
+        // 主要对 Array, Object 深复制，修改子类的中继承自父类的 Array, Object 不会影响父类
+        Object.merge(this.prototype, key, value)
+    }
 
     return this;
 };
