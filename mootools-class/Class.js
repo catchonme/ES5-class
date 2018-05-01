@@ -103,13 +103,19 @@ Object.extend({
 /** Class 主体 */
 var Class = function(params) {
     var newClass = function () {
+        // 初始化 newClass
         reset(this);
+        // this.$caller 用来指代调用自身的函数
         this.$caller = null;
+        // initialize 函数需要在使用 new 的时候执行，而不需要单独的调用才执行
         var value = (this.initialize) ? this.initialize.apply(this, arguments) : this;
         this.$caller = null;
         return value;
+        // 使用extend 来将 newClass 和 Class 进行绑定
+        // implement 来将所有初始设置的函数添加到 Class 的 prototype 中
     }.extend(this).implement(params);
-    
+
+    // 设置 newClass 的 parent，这样在函数中使用 this.parent(args) 调用父函数时，就可以调用这个函数了
     newClass.prototype.parent = parent;
     
     return newClass;
@@ -117,7 +123,8 @@ var Class = function(params) {
 
 var parent = function() {
     if (!this.$caller) throw new Error('The method "parent" cannot be called');
-    
+
+    // 使用 this.parent(args) 调用父函数时，找到子类当前函数的名字，然后在父类中找到同名函数，并执行
     var name = this.$caller.$name,
         parent = this.$caller.$owner.parent,
         previous = (parent) ? parent.prototype[name] : null;
@@ -145,11 +152,16 @@ var reset = function(object) {
 }
 
 var implement = function (key, value, retain) {
+    // 创建类时是否有 Extends/Implements ，判断是否需要把(伪)父类绑定到当前类中
     if (Class.Mutators.hasOwnProperty(key)) {
         value = Class.Mutators[key].call(this, value);
         if (value == null) return this;
     }
-    
+
+    // 把创建类中的属性和函数都赋给当前类的 prototype 中
+    // Implements 时，retain 为 true，直接把伪父类的函数赋给伪子类的 prototype 中
+    // Extends 时，retain 为 undefined，需要设置函数的 $caller 等属性
+    // 属性都使用深复制赋给(伪)子类
     if (type(value) == 'function') {
         this.prototype[key] = (retain) ? value : wrap(this, key, value);
     } else {
@@ -159,30 +171,41 @@ var implement = function (key, value, retain) {
     return this;
 }
 
+// 使用 Extends 时，对父类函数做处理
+// 使得子类函数中使用 this.parent(args) 可以调用到父函数中的同名函数
 var wrap = function (self, key, method) {
     if (method.$origin) method = method.$origin;
     
     var wrapper = function () {
         if (method.$protected && this.$caller == null) throw new Error('The method "' + key + '" cannot be called.');
-        
+
+        // 给函数绑定 $caller 属性
         var current = this.$caller;
         this.$caller = wrapper;
         var result = method.apply(this, arguments);
         this.$caller = current;
         
         return result;
+        // 使用 extend 给函数加上 $owner/$origin/$name 属性
     }.extend({$owner: self, $origin: method, $name: key});
     
     return wrapper;
 }
 
+// 通过中间变量，把父类的属性和函数赋给子类
 var getInstance = function(klass) {
     var proto = new klass;
     return proto;
 }
 
+// 给 Class 增加 implement 方法，这样就可以在新建 Class 的时候，
+// 使用 implement 把参数中属性和函数添加到类的 prototype 中
 Class.implement('implement', implement.overloadSetter());
 
+// 类的两个拓展方法
+// Extends 继承父类的属性和函数
+// Implements 把伪父类的属性和函数添加到伪子类的 prototype 中，
+// 此时不能使用 this.parent 来调用伪父类的同名函数
 Class.Mutators = {
     Extends: function (parent) {
         this.parent = parent;
