@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="../class.js"></script>
+</head>
+<body>
+<script>
+    var Animal = new Class({
+        initialize: function (name) {
+            this.name = name;
+        }
+    });
+
+    var myAnimal = new Animal('jack');
+    log(myAnimal.name);
+
+    var Cat = new Class({
+        Extends: Animal,
+        initialize: function (name, age) {
+            this.parent(name);
+            this.age = age;
+        }
+    })
+
+    var myCat = new Cat('Mia', 23);
+    log(myCat.name);
+    log(myCat.age);
+
+
+
+
+
+
+
+
+    function log() {
+        console.log.apply(console, arguments);
+    }
+</script>
+</body>
+</html>
