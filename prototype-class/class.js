@@ -4,7 +4,7 @@ var Class = (function () {
     function subclass() {};
     function create() {
         var parent = null, properties = [].slice.call(arguments);
-        // prototype.js 继承的方式为创建类的第一个参数伪父类的名字
+        // prototype.js 继承的方式为创建类的第一个参数为父类的名字
         // 所以这里判断第一个参数是否是函数，如果是，则他就是当前类的父类
         if (isFunction(properties[0]))
             parent = properties.shift();
