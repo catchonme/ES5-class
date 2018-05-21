@@ -8,7 +8,7 @@
 
 ---
 - 如何实现`Class`
-> `Class`需要属性和函数，所以最适合的就是使用`function`，因为`function`可以在内部通过`this.name = name` 设置属性，通过`func.prototype.add = function(){}`来来实现类的内部函数
+> `Class`需要属性和函数，所以最适合的就是使用`function`，因为`function`可以在内部通过`this.name = name` 设置属性，通过`func.prototype.add = function(){}`来实现类的内部函数
 - 子类如何继承父类的属性和函数
 > 增加中间变量，`var proto = new Parent()` 实例化父类后，就可以将父类的属性和原型上的函数都赋给`proto`，然后遍历`proto`，赋给子函数（同时需要使用apply绑定子类的this），这样子类在调用该方法时，就能够获取子类自身上的属性
 - 子类继承父类的属性，修改后，不影响父类的属性
